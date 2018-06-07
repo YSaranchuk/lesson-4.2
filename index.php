@@ -1,6 +1,11 @@
 <?php
 //Подскажите нужно создать базу на основе кода которые вы показывали с транзакциями? в один файл или нужно создавать дополнительные папки
 //или хватит index.php?
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+header("Content-Type: text/html; charset=utf-8");
+
 define('DB_DRIVER','mysql');
 define('DB_HOST','localhost');
 define('DB_NAME','tasks');
