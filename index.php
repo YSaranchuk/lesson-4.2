@@ -1,89 +1,63 @@
 <?php
-//Подскажите нужно создать базу на основе кода которые вы показывали с транзакциями? в один файл или нужно создавать дополнительные папки
-//или хватит index.php?
+
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 header("Content-Type: text/html; charset=utf-8");
+require_once 'upload/core.php';
+?>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task manager</title>
+</head>
+<body>
+        <?php if ($allTasks->rowCount() === 0): ?>
+            <p style="text-align: center;">Вы пока не добавили ни одной задачи</p>
+        <?php else: ?>
 
-define('DB_DRIVER','mysql');
-define('DB_HOST','localhost');
-define('DB_NAME','tasks');
-define('DB_USER','root');
-define('DB_PASS','');
+            <form method="POST">
+                <label>
+                    Сортировать по:
+                    <select name="sortBy" id="sortBy">
+                        <option value="date">Дате добавления</option>
+                        <option value="status">Статусу</option>
+                        <option value="description">Описанию</option>
+                    </select>
+                </label>
+                <input type="submit" name="sort" id="sort" value="Сортировка">
+            </form>
 
-try
-{
-	$connect_str = DB_DRIVER . ':host='. DB_HOST . ';dbname=' . DB_NAME;
-	$db = new PDO($connect_str,DB_USER,DB_PASS);
- 
-	$rows = $db->exec("CREATE TABLE `tasks`(
-		id INT PRIMARY KEY AUTO_INCREMENT,
-		fname VARCHAR(20) NOT NULL DEFAULT '',
-		email VARCHAR(50) NOT NULL DEFAULT '',
-		money INT NOT NULL DEFAULT 0) ENGINE=InnoDB;");
- 
-	$rows = $db->exec("INSERT INTO `tasks` VALUES
-		(null, 'Ivan', 'ivan@test.com', 15000),
-		(null, 'Petr', 'petr@test.com', 411000),
-		(null, 'Vasiliy', 'vasiliy@test.com', 1500000)
-	");
- 
-	
-	$summ = 50000;
- 
-	$transaction = true;           
- 
-	$db->beginTransaction();
- 
-	$sth1 = $db->query("SELECT money FROM testing WHERE fname='Ivan'");
-	$sth2 = $db->query("SELECT money FROM testing WHERE fname='Petr'");
-	$row1 = $sth1->fetch();
-	$row2 = $sth2->fetch();
- 
-	if(!$row1 || !$row2) $transaction = false;
- 
-	$total2 = $summ + $row2['money'];
-	$total1 = $row1['money'] - $summ;
- 
-	if($total1 < 0 || $total2 < 0) $transaction = false;
- 
-	$num_rows1 = $db->exec("UPDATE `testing` SET money='" . $total1 . "' WHERE fname='Ivan'");
-	$num_rows2 = $db->exec("UPDATE `testing` SET money='" . $total2 . "' WHERE fname='Petr'");
- 
-	if($transaction)
-	{
-    if($db->commit())
-    		echo "Транзакция успешно прошла";
-	}
-	else
-	{
-		echo "Транзакция не прошла";
-		$db->rollback();
-	}
-}
-catch(PDOException $e)
-{
-	die("Error: ".$e->getMessage());
-}
-//свой код (черновик)
-$task = new Tasks;
-$allTasks = $tasks->getAllTasks(); 
+            <table>
+                <tr>
+                    <td>Задача</td>
+                    <td>Статус</td>
+                    <td>Дата добавления</td>
+                    <td>Действия</td>
+                </tr>
+                <?php foreach ($allTasks as $task): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($task['description']) ?></td>
+                        <?php echo htmlspecialchars($task['is_done']) ? '<td style="color: green">Выполнено</td>' : '<td style="color: orange">В процессе</td>' ?>
+                        <td><?php echo htmlspecialchars($task['date_added']) ?></td>
+                        <td>
+                            <p>Изменить </p>
+                            <?php if (!$task['is_done']): ?>
+                                <p>Выполнить </p>
+                            <?php endif; ?>
+                            <p class='delete link'>Удалить </p>
+                            <input type="hidden" value="<?php echo $task['id'] ?>">
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php endif; ?>
+    <div class="forms">
+        <form method="POST">
+            <textarea name="task" placeholder="Задача" id="task" cols="50" rows="3" required></textarea>
+            <input type="submit" name="addTask" value="Добавить задачу" class="button">
+        </form>
+    </div>
 
-if (!empty($_POST['addTasks'])) {
-    $tasks->addTasks();
-    echo $tasks->getLastTasks();
-}
-if (!empty($_POST['done'])) {
-    echo $tasks->setTaskIsDone() ? 'Выполнено' : 'В процессе';
-}
-if (!empty($_POST['delete'])) {
-    $task->deleteTask();
-}
-if (!empty($_POST['editDescription'])) {
-    echo $task->editTasks();
-}
-if (!empty($_POST['sortBy'])) {
-    $table = new TasksTable;
-    echo $table->sortTable($_POST['sortBy']);
-}
+</body>
